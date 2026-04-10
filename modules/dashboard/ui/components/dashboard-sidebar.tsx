@@ -33,10 +33,10 @@ export const DashboardSidebar = () => {
     const pathname = usePathname();
 
     return (
-        <Sidebar className="w-56 border-r border-white/10 bg-white/5 backdrop-blur-xl">
+        <Sidebar className="border-r border-white/10 bg-white/5 backdrop-blur-xl">
 
             {/* HEADER */}
-            <SidebarHeader className="bg-[#0B1F2A]">
+            <SidebarHeader className="bg-[#0068a8]">
                 <Link href="/" className="flex items-center gap-2 px-3 py-4">
                     <Image src="/logo.svg" height={34} width={34} alt="Pohiri" />
                     <p className="text-xl font-semibold text-white tracking-tight">
@@ -45,12 +45,12 @@ export const DashboardSidebar = () => {
                 </Link>
             </SidebarHeader>
 
-            <div className="px-4 bg-[#0B1F2A]">
+            <div className="px-4 bg-[#0068a8]">
                 <Separator className="bg-white/10" />
             </div>
 
             {/* CONTENT */}
-            <SidebarContent className="bg-[#0B1F2A]">
+            <SidebarContent className="bg-[#0068a8]">
 
                 {/* FIRST SECTION */}
                 <SidebarGroup>
@@ -124,7 +124,7 @@ export const DashboardSidebar = () => {
             </SidebarContent>
 
             {/* FOOTER */}
-            <SidebarFooter className="px-3 py-4 text-white/60 text-xs bg-[#0B1F2A]">
+            <SidebarFooter className="px-3 py-4 text-white/60 text-xs bg-[#0068a8]">
                 <DashboardUserButton />
             </SidebarFooter>
         </Sidebar>
