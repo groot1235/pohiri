@@ -16,6 +16,7 @@ import {
   InputGroupAddon,
 } from "@/components/ui/input-group"
 import { SearchIcon, CheckIcon } from "lucide-react"
+import { CommandResponsiveDialog } from "./cammand"
 
 function Command({
   className,
@@ -184,6 +185,7 @@ function CommandShortcut({
 
 export {
   Command,
+  CommandResponsiveDialog,
   CommandDialog,
   CommandInput,
   CommandList,
