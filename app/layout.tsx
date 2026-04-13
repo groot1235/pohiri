@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Manrope } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { TRPCReactProvider } from "@/trpc/client";
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
 
 const manrope = Manrope({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -33,7 +34,9 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <TRPCReactProvider>
-          {children}
+          <NuqsAdapter>
+            {children}
+          </NuqsAdapter>
         </TRPCReactProvider>
       </body>
     </html>
