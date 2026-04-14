@@ -5,9 +5,9 @@ import { and, count, desc, eq, getTableColumns, ilike } from "drizzle-orm";
 import { db } from "@/app/db";
 import { agents, meetings } from "@/app/db/schema";
 import { createTRPCRouter, premiumProcedure, protectedProcedure } from "@/trpc/init";
-//import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, MIN_PAGE_SIZE } from "@/constants";
+import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, MIN_PAGE_SIZE } from "@/constants";
 
-import { agentsInsertSchema, agentsUpdateSchema } from "../schema";
+import { agentsInsertSchema, agentsUpdateSchema } from "@/modules/agents/schema";
 
 export const agentsRouter = createTRPCRouter({
     update: protectedProcedure
@@ -78,19 +78,19 @@ export const agentsRouter = createTRPCRouter({
             return existingAgent;
         }),
     getMany: protectedProcedure
-        //  .input(
-        //     z.object({
-        //        page: z.number().default(DEFAULT_PAGE),
-        //         pageSize: z
-        //              .number()
-        //              .min(MIN_PAGE_SIZE)
-        //             .max(MAX_PAGE_SIZE)
-        //             .default(DEFAULT_PAGE_SIZE),
-        //          search: z.string().nullish()
-        //       })
-        //  )
+        .input(
+            z.object({
+                page: z.number().default(DEFAULT_PAGE),
+                pageSize: z
+                    .number()
+                    .min(MIN_PAGE_SIZE)
+                    .max(MAX_PAGE_SIZE)
+                    .default(DEFAULT_PAGE_SIZE),
+                search: z.string().nullish()
+            })
+        )
         .query(async ({ ctx, input }) => {
-            const { search = "", page = 1, pageSize } = input;
+            const { search, page, pageSize } = input;
 
             const data = await db
                 .select({
