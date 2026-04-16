@@ -75,7 +75,7 @@ export const meetingsRouter = createTRPCRouter({
                     agent: agents,
                 })
                 .from(meetings)
-                .leftJoin(agents, eq(meetings.agentId, agents.id))
+                .innerJoin(agents, eq(meetings.agentId, agents.id))
                 .where(
                     and(
                         eq(meetings.id, input.id),
