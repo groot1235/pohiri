@@ -1,15 +1,21 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { and, count, desc, eq, getTableColumns, ilike } from "drizzle-orm";
+import { and, count, desc, eq, not, getTableColumns, ilike } from "drizzle-orm";
 
 import { db } from "@/app/db";
 import { meetings, agents } from "@/app/db/schema";
 import { createTRPCRouter, premiumProcedure, protectedProcedure } from "@/trpc/init";
+import { streamVideo } from "@/lib/stream-video";
 import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, MIN_PAGE_SIZE } from "@/constants";
 
 import { meetingsInsertSchema, meetingsUpdateSchema } from "@/modules/meetings/schemas";
 
 export const meetingsRouter = createTRPCRouter({
+    generateToken: protectedProcedure
+        .mutation(async ({ ctx }) => {
+            const token = streamVideo.generateUserToken({ user_id: ctx.auth.user.id });
+            return token;
+        }),
     getMany: protectedProcedure
         .input(
             z.object({
@@ -146,5 +152,56 @@ export const meetingsRouter = createTRPCRouter({
             }
 
             return removedMeeting;
+        }),
+    startAgent: protectedProcedure
+        .input(z.object({ meetingId: z.string() }))
+        .mutation(async ({ ctx, input }) => {
+            const [existingMeeting] = await db
+                .select()
+                .from(meetings)
+                .where(
+                    and(
+                        eq(meetings.id, input.meetingId),
+                        eq(meetings.userId, ctx.auth.user.id),
+                        not(eq(meetings.status, "completed")),
+                        not(eq(meetings.status, "active")),
+                        not(eq(meetings.status, "cancelled")),
+                        not(eq(meetings.status, "processing")),
+                    )
+                );
+
+            if (!existingMeeting) {
+                return { success: false, reason: "Meeting not found or already active." };
+            }
+
+            const [existingAgent] = await db
+                .select()
+                .from(agents)
+                .where(eq(agents.id, existingMeeting.agentId));
+
+            if (!existingAgent) {
+                throw new TRPCError({ code: "NOT_FOUND", message: "Agent not found" });
+            }
+
+            await db
+                .update(meetings)
+                .set({
+                    status: "active",
+                    startedAt: new Date(),
+                })
+                .where(eq(meetings.id, existingMeeting.id));
+
+            const call = streamVideo.video.call("default", existingMeeting.id);
+            const realtimeClient = await streamVideo.video.connectOpenAi({
+                call,
+                openAiApiKey: process.env.OPENAI_API_KEY!,
+                agentUserId: existingAgent.id,
+            });
+
+            realtimeClient.updateSession({
+                instructions: existingAgent.instructions,
+            });
+
+            return { success: true };
         }),
 });
