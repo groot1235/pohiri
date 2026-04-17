@@ -128,3 +128,18 @@
     @apply font-sans;
   }
 }
+
+/* Stream Video SDK UI overrides for square buttons */
+.str-video__call-controls .str-video__button,
+.str-video__call-controls .str-video__toggle-button,
+.str-video__call-controls .str-video__composite-button,
+.str-video__call-controls .str-video__icon,
+.str-video__toggle-button {
+  border-radius: var(--radius-md) !important;
+}
+
+:root {
+  --str-video__button-border-radius: var(--radius-md) !important;
+  --str-video__button--border-radius: var(--radius-md) !important;
+  --str-video__border-radius-circle: var(--radius-md) !important;
+}
