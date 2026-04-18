@@ -3,6 +3,7 @@
 import { z } from "zod";
 import Link from "next/link";
 import { useState } from "react";
+import type { FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { OctagonAlertIcon } from "lucide-react";
@@ -42,27 +43,42 @@ export const SignInView = () => {
         },
     });
 
-    const onSubmit = (data: z.infer<typeof formSchema>) => {
+    const onSubmit = form.handleSubmit(async (data) => {
         setError(null);
         setPending(true);
+        let isSuccess = false;
 
-        authClient.signIn.email(
-            {
-                email: data.email,
-                password: data.password,
-                callbackURL: "/dashboard",
-            },
-            {
-                onSuccess: () => {
-                    setPending(false);
-                    router.push("/dashboard");
+        try {
+            await authClient.signIn.email(
+                {
+                    email: data.email,
+                    password: data.password,
+                    callbackURL: "/dashboard",
                 },
-                onError: ({ error }) => {
-                    setPending(false);
-                    setError(error.message)
-                },
+                {
+                    onSuccess: () => {
+                        isSuccess = true;
+                    },
+                    onError: ({ error }) => {
+                        setError(error.message);
+                    },
+                }
+            );
+
+            if (!isSuccess) {
+                return;
             }
-        );
+
+            router.replace("/dashboard");
+            router.refresh();
+        } finally {
+            setPending(false);
+        }
+    });
+
+    const handleFormSubmit = async (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        await onSubmit(event);
     };
 
     const onSocial = (provider: "github" | "google") => {
@@ -91,7 +107,7 @@ export const SignInView = () => {
             <Card className="overflow-hidden p-0">
                 <CardContent className="grid p-0 md:grid-cols-2">
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 md:p-8">
+                        <form method="post" onSubmit={handleFormSubmit} className="p-6 md:p-8">
                             <div className="flex flex-col gap-6">
                                 <div className="flex flex-col items-center text-center">
                                     <h1 className="text-2xl font-bold">
