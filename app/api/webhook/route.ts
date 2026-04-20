@@ -14,14 +14,11 @@ import {
 import { db } from "@/app/db";
 import { agents, meetings } from "@/app/db/schema";
 import { streamVideo } from "@/lib/stream-video";
-//import { inngest } from "@/inngest/client";
+import { inngest } from "@/lib/inngest/client";
 import { generateAvatarUri } from "@/lib/avatar";
 import { streamChat } from "@/lib/stream-chat";
 
-const openaiClient = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY!,
-    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
-});
+const openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
 function verifySignatureWithSDK(body: string, signature: string): boolean {
     return streamVideo.verifyWebhook(body, signature);
@@ -29,24 +26,16 @@ function verifySignatureWithSDK(body: string, signature: string): boolean {
 
 export async function POST(req: NextRequest) {
     const signature = req.headers.get("x-signature");
+    const apiKey = req.headers.get("x-api-key");
 
-    if (!signature) {
+    if (!signature || !apiKey) {
         return NextResponse.json(
-            { error: "Missing signature" },
+            { error: "Missing signature or API key" },
             { status: 400 }
         );
     }
 
     const body = await req.text();
-
-    const fs = require('fs');
-    fs.appendFileSync('webhook_debug.log', JSON.stringify({
-        time: new Date().toISOString(),
-        signature,
-        headers: Object.fromEntries(req.headers.entries()),
-        bodyPreview: body.substring(0, 100),
-        bodyValid: verifySignatureWithSDK(body, signature)
-    }) + '\n');
 
     if (!verifySignatureWithSDK(body, signature)) {
         return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
@@ -154,13 +143,13 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
         }
 
-        // await inngest.send({
-        //   name: "meetings/processing",
-        //   data: {
-        //     meetingId: updatedMeeting.id,
-        //     transcriptUrl: updatedMeeting.transcriptUrl,
-        //   },
-        // });
+        await inngest.send({
+            name: "meetings/processing",
+            data: {
+                meetingId: updatedMeeting.id,
+                transcriptUrl: updatedMeeting.transcriptUrl,
+            },
+        });
     } else if (eventType === "call.recording_ready") {
         const event = payload as CallRecordingReadyEvent;
         const meetingId = event.call_cid.split(":")[1]; // call_cid is formatted as "type:id"
@@ -241,7 +230,7 @@ export async function POST(req: NextRequest) {
                     ...previousMessages,
                     { role: "user", content: text },
                 ],
-                model: "gemini-2.5-flash",
+                model: "gpt-4o",
             });
 
             const GPTResponseText = GPTResponse.choices[0].message.content;

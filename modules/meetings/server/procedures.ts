@@ -1,14 +1,17 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { and, count, desc, eq, not, getTableColumns, ilike } from "drizzle-orm";
+import { and, count, desc, eq, getTableColumns, ilike, inArray } from "drizzle-orm";
 
 import { db } from "@/app/db";
-import { meetings, agents } from "@/app/db/schema";
+import { meetings, agents, user } from "@/app/db/schema";
 import { createTRPCRouter, premiumProcedure, protectedProcedure } from "@/trpc/init";
 import { streamVideo } from "@/lib/stream-video";
+import { streamChat } from "@/lib/stream-chat";
+
 import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, MIN_PAGE_SIZE } from "@/constants";
 
 import { meetingsInsertSchema, meetingsUpdateSchema } from "@/modules/meetings/schemas";
+import { StreamTranscriptItem } from "../types";
 
 export const meetingsRouter = createTRPCRouter({
     generateToken: protectedProcedure
@@ -156,6 +159,9 @@ export const meetingsRouter = createTRPCRouter({
     startAgent: protectedProcedure
         .input(z.object({ meetingId: z.string() }))
         .mutation(async ({ ctx, input }) => {
+            // The agent joins via the Stream webhook (call.session_started event).
+            // This procedure is kept as a no-op so the frontend call doesn't error,
+            // but the real work happens in /api/webhook when Stream fires the event.
             const [existingMeeting] = await db
                 .select()
                 .from(meetings)
@@ -163,45 +169,70 @@ export const meetingsRouter = createTRPCRouter({
                     and(
                         eq(meetings.id, input.meetingId),
                         eq(meetings.userId, ctx.auth.user.id),
-                        not(eq(meetings.status, "completed")),
-                        not(eq(meetings.status, "active")),
-                        not(eq(meetings.status, "cancelled")),
-                        not(eq(meetings.status, "processing")),
                     )
                 );
 
             if (!existingMeeting) {
-                return { success: false, reason: "Meeting not found or already active." };
+                throw new TRPCError({ code: "NOT_FOUND", message: "Meeting not found" });
             }
-
-            const [existingAgent] = await db
-                .select()
-                .from(agents)
-                .where(eq(agents.id, existingMeeting.agentId));
-
-            if (!existingAgent) {
-                throw new TRPCError({ code: "NOT_FOUND", message: "Agent not found" });
-            }
-
-            await db
-                .update(meetings)
-                .set({
-                    status: "active",
-                    startedAt: new Date(),
-                })
-                .where(eq(meetings.id, existingMeeting.id));
-
-            const call = streamVideo.video.call("default", existingMeeting.id);
-            const realtimeClient = await streamVideo.video.connectOpenAi({
-                call,
-                openAiApiKey: process.env.OPENAI_API_KEY!,
-                agentUserId: existingAgent.id,
-            });
-
-            realtimeClient.updateSession({
-                instructions: existingAgent.instructions,
-            });
 
             return { success: true };
+        }),
+    generateChatToken: protectedProcedure
+        .mutation(async ({ ctx }) => {
+            return streamChat.createToken(ctx.auth.user.id);
+        }),
+    getTranscript: protectedProcedure
+        .input(z.object({ id: z.string() }))
+        .query(async ({ input, ctx }) => {
+            const [meeting] = await db
+                .select()
+                .from(meetings)
+                .where(
+                    and(
+                        eq(meetings.id, input.id),
+                        eq(meetings.userId, ctx.auth.user.id),
+                    )
+                );
+
+            if (!meeting || !meeting.transcriptUrl) {
+                return [];
+            }
+
+            const response = await fetch(meeting.transcriptUrl);
+            const transcript = (await response.json()) as StreamTranscriptItem[];
+
+            const speakerIds = [...new Set(transcript.map((item) => item.speaker_id))];
+
+            if (speakerIds.length === 0) {
+                return transcript.map((item) => ({
+                    ...item,
+                    user: { name: "Unknown", image: null },
+                }));
+            }
+
+            const speakers = await db
+                .select()
+                .from(user)
+                .where(inArray(user.id, speakerIds));
+
+            const speakersMap = new Map(speakers.map((s) => [s.id, s]));
+
+            const meetingAgent = await db
+                .select()
+                .from(agents)
+                .where(eq(agents.id, meeting.agentId));
+
+            const agentMap = new Map(meetingAgent.map((a) => [a.id, a]));
+
+            return transcript.map((item) => ({
+                ...item,
+                user:
+                    speakersMap.get(item.speaker_id) ||
+                    agentMap.get(item.speaker_id) || {
+                        name: "Unknown",
+                        image: null,
+                    },
+            }));
         }),
 });
