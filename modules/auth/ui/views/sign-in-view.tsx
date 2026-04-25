@@ -23,6 +23,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
+import BackdropGradient from "@/modules/backdrop-gradient";
 
 const formSchema = z.object({
     email: z.string().email(),
@@ -104,6 +105,7 @@ export const SignInView = () => {
 
     return (
         <div className="flex flex-col gap-6">
+
             <Card className="overflow-hidden p-0">
                 <CardContent className="grid p-0 md:grid-cols-2">
                     <Form {...form}>
