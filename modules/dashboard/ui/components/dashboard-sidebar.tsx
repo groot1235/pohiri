@@ -33,24 +33,31 @@ export const DashboardSidebar = () => {
     const pathname = usePathname();
 
     return (
-        <Sidebar className="border-r border-white/10 bg-white/5 backdrop-blur-xl">
+        <Sidebar className="bg-background/95 backdrop-blur">
 
             {/* HEADER */}
-            <SidebarHeader className="bg-[#0068a8]">
-                <Link href="/" className="flex items-center gap-2 px-3 py-4">
-                    <Image src="/logo.svg" height={34} width={34} alt="Pohiri" />
-                    <p className="text-xl font-semibold text-white tracking-tight">
+            <SidebarHeader className="bg-transparent">
+                <Link href="/dashboard" className="flex items-center gap-3 px-4 py-4">
+                    <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/[0.08]">
+                        <Image src="/logo.svg" height={22} width={22} alt="Pohiri" />
+                    </div>
+                    <p className="text-sm font-semibold text-white tracking-wide">
                         Pohiri
                     </p>
                 </Link>
             </SidebarHeader>
 
-            <div className="px-4 bg-[#0068a8]">
-                <Separator className="bg-white/10" />
+            <div className="px-4">
+                <Separator className="bg-white/[0.06]" />
             </div>
 
             {/* CONTENT */}
-            <SidebarContent className="bg-[#0068a8]">
+            <SidebarContent className="bg-transparent">
+
+                {/* SECTION TITLE */}
+                <p className="px-4 pt-4 pb-2 text-[10px] uppercase tracking-widest text-white/40">
+                    Channels
+                </p>
 
                 {/* FIRST SECTION */}
                 <SidebarGroup>
@@ -62,20 +69,20 @@ export const DashboardSidebar = () => {
                                         asChild
                                         isActive={pathname === item.href}
                                         className={cn(
-                                            "h-11 rounded-xl px-3 transition-all duration-300",
+                                            "h-10 rounded-lg px-3 transition-all",
 
                                             // default
-                                            "text-white/80 hover:text-white",
-                                            "hover:bg-white/10",
+                                            "text-white/70 hover:text-white",
+                                            "hover:bg-white/[0.05]",
 
                                             // active
                                             pathname === item.href &&
-                                            "bg-gradient-to-r from-[#0068a8]/80 to-[#00a8e8]/60 text-white shadow-lg border border-white/10"
+                                            "bg-white/[0.08] text-white border border-white/[0.08]"
                                         )}
                                     >
                                         <Link href={item.href} className="flex items-center gap-3">
-                                            <item.icon className="size-5" />
-                                            <span className="text-sm font-medium">
+                                            <item.icon className="size-4 opacity-80" />
+                                            <span className="text-sm">
                                                 {item.label}
                                             </span>
                                         </Link>
@@ -87,7 +94,7 @@ export const DashboardSidebar = () => {
                 </SidebarGroup>
 
                 <div className="px-4 py-3">
-                    <Separator className="bg-white/10" />
+                    <Separator className="bg-white/[0.06]" />
                 </div>
 
                 {/* SECOND SECTION */}
@@ -100,17 +107,17 @@ export const DashboardSidebar = () => {
                                         asChild
                                         isActive={pathname === item.href}
                                         className={cn(
-                                            "h-11 rounded-xl px-3 transition-all duration-300",
-                                            "text-white/70 hover:text-white",
-                                            "hover:bg-white/10",
+                                            "h-10 rounded-lg px-3 transition-all",
+                                            "text-white/60 hover:text-white",
+                                            "hover:bg-white/[0.05]",
 
                                             pathname === item.href &&
-                                            "bg-gradient-to-r from-[#0068a8]/80 to-[#00a8e8]/60 text-white shadow-lg border border-white/10"
+                                            "bg-white/[0.08] text-white border border-white/[0.08]"
                                         )}
                                     >
                                         <Link href={item.href} className="flex items-center gap-3">
-                                            <item.icon className="size-5" />
-                                            <span className="text-sm font-medium">
+                                            <item.icon className="size-4 opacity-80" />
+                                            <span className="text-sm">
                                                 {item.label}
                                             </span>
                                         </Link>
@@ -124,7 +131,7 @@ export const DashboardSidebar = () => {
             </SidebarContent>
 
             {/* FOOTER */}
-            <SidebarFooter className="px-3 py-4 text-white/60 text-xs bg-[#0068a8]">
+            <SidebarFooter className="border-t border-white/[0.06] bg-transparent px-3 py-4 text-xs text-white/40">
                 <DashboardUserButton />
             </SidebarFooter>
         </Sidebar>

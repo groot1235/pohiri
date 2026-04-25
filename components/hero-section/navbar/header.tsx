@@ -4,6 +4,10 @@ import { Logo } from "@/components/hero-section/navbar/logo";
 import { useScroll } from "@/hooks/use-scroll";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "@/components/hero-section/navbar/mobile-nav";
+import Link from 'next/link'
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { authClient } from "@/lib/auth-client";
 
 export const navLinks = [
     {
@@ -20,8 +24,20 @@ export const navLinks = [
     },
 ];
 
+
+
 export function Header() {
     const scrolled = useScroll(10);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const router = useRouter();
+
+    useEffect(() => {
+        const checkSession = async () => {
+            const session = await authClient.getSession();
+            setIsLoggedIn(!!session);
+        };
+        checkSession();
+    }, []);
 
     return (
         <header
@@ -55,10 +71,21 @@ export function Header() {
                             </Button>
                         ))}
                     </div>
-                    <Button size="sm" variant="outline">
-                        Sign In
+                    <Button
+                        size="lg"
+                        className="font-semibold"
+                        variant='outline'
+                        onClick={() => router.push(isLoggedIn ? "/dashboard" : "/sign-in")}
+                    >
+                        login
                     </Button>
-                    <Button size="sm">Get Started</Button>
+                    <Button
+                        size="lg"
+                        className="font-semibold"
+                        onClick={() => router.push(isLoggedIn ? "/dashboard" : "/sign-up")}
+                    >
+                        Get Started
+                    </Button>
                 </div>
                 <MobileNav />
             </nav>

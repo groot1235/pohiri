@@ -9,11 +9,17 @@ interface Props {
 
 const Layout = ({ children }: Props) => {
     return (
-        <SidebarProvider>
+        <SidebarProvider
+            style={{
+                "--sidebar-width-icon": "54px",
+            } as React.CSSProperties}
+        >
             <DashboardSidebar />
-            <main className="flex flex-col h-screen w-screen bg-muted">
+            <main className="flex min-h-svh flex-1 flex-col overflow-hidden bg-background">
                 <DashboardNavbar />
-                {children}
+                <div className="flex-1 overflow-auto bg-background">
+                    {children}
+                </div>
             </main>
         </SidebarProvider>
     );

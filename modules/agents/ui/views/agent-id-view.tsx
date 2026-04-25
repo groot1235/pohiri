@@ -72,7 +72,7 @@ export const AgentIdView = ({ agentId }: Props) => {
                     onEdit={() => setUpdateAgentDialogOpen(true)}
                     onRemove={handleRemoveAgent}
                 />
-                <div className="bg-white rounded-lg border">
+                <div className="bg-[#242424] rounded-lg border">
                     <div className="px-4 py-5 gap-y-5 flex flex-col col-span-5">
                         <div className="flex items-center gap-x-3">
                             <GeneratedAvatar
@@ -91,7 +91,7 @@ export const AgentIdView = ({ agentId }: Props) => {
                         </Badge>
                         <div className="flex flex-col gap-y-4">
                             <p className="text-lg font-medium">Instructions</p>
-                            <p className="text-neutral-800">{data.instructions}</p>
+                            <p className="text-muted-foreground">{data.instructions}</p>
                         </div>
                     </div>
                 </div>
