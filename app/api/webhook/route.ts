@@ -1,7 +1,6 @@
-import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
 import { and, eq, not } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
-import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 import {
     MessageNewEvent,
     CallEndedEvent,
@@ -18,7 +17,7 @@ import { inngest } from "@/lib/inngest/client";
 import { generateAvatarUri } from "@/lib/avatar";
 import { streamChat } from "@/lib/stream-chat";
 
-const openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+const geminiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 function verifySignatureWithSDK(body: string, signature: string): boolean {
     return streamVideo.verifyWebhook(body, signature);
@@ -219,25 +218,25 @@ export async function POST(req: NextRequest) {
             const previousMessages = channel.state.messages
                 .slice(-5)
                 .filter((msg) => msg.text && msg.text.trim() !== "")
-                .map<ChatCompletionMessageParam>((message) => ({
-                    role: message.user?.id === existingAgent.id ? "assistant" : "user",
-                    content: message.text || "",
+                .map((message) => ({
+                    role: message.user?.id === existingAgent.id ? "model" : "user",
+                    parts: [{ text: message.text || "" }],
                 }));
 
-            const GPTResponse = await openaiClient.chat.completions.create({
-                messages: [
-                    { role: "system", content: instructions },
+            const response = await geminiClient.models.generateContent({
+                model: "gemini-2.5-flash",
+                systemInstruction: instructions,
+                contents: [
                     ...previousMessages,
-                    { role: "user", content: text },
+                    { role: "user", parts: [{ text: text }] },
                 ],
-                model: "gpt-4o",
             });
 
-            const GPTResponseText = GPTResponse.choices[0].message.content;
+            const GPTResponseText = response.text;
 
             if (!GPTResponseText) {
                 return NextResponse.json(
-                    { error: "No response from GPT" },
+                    { error: "No response from Gemini" },
                     { status: 400 }
                 );
             }
